@@ -348,9 +348,9 @@ app = dash.Dash(__name__)
 static_content_before = [
     html.H2('CRYPTO WHALE WATCHING APP'),
     html.H3(html.A('GitHub link ro repository running this page',
-                   href="https://github.com/nockiro/eth_python_tracker")),
+                   href="https://github.com/nockiro/crypto-whale-watching-app")),
     html.H3(html.A('GitHub link to the original authors, consider supporting them by starring the repository.',
-                   href="https://github.com/pmaji/eth_python_tracker")),
+                   href="https://github.com/pmaji/crypto-whale-watching-app")),
     html.P([
         "Legend: Bright colored mark = likely WHALE ",
         "(high volume price point via 1 unique order, or many identical medium-sized orders in a ladder). ", html.Br(),
