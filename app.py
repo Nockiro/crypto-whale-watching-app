@@ -33,7 +33,6 @@ debugColors = ['\033[34m','\033[90m','\033[32m','\033[33;1m','\033[31m']
 serverPort = 8050
 clientRefresh = 1
 desiredPairRefresh = 10000  # (in ms) The lower it is, the better is it regarding speed of at least some pairs, the higher it is, the less cpu load it takes.
-js_extern = "https://cdn.rawgit.com/pmaji/crypto-whale-watching-app/master/main.js"
 noDouble = True  # if activatet each order is in case of beeing part of a ladder just shown once (just as a bubble, not as a ladder)
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"} # used for the tooltip
 SIGNIFICANT = {"USD": 2, "BTC": 5, "EUR": 2, "GBP": 2} # used for rounding
@@ -344,7 +343,6 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=60):
 
 # begin building the dash itself
 app = dash.Dash()
-app.scripts.append_script({"external_url": js_extern})
 # simple layout that can be improved with better CSS/JS later, but it does the job for now
 # static_content_before contains all the info we want in our headers that won't be dynamic (for now)
 static_content_before = [
