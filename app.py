@@ -1,4 +1,4 @@
-# modules
+﻿# modules
 # dash-related libraries
 import dash
 from dash.dependencies import Output, Event
@@ -350,7 +350,9 @@ app.scripts.append_script({"external_url": js_extern})
 # static_content_before contains all the info we want in our headers that won't be dynamic (for now)
 static_content_before = [
     html.H2('CRYPTO WHALE WATCHING APP'),
-    html.H3(html.A('GitHub Link Here (Consider supporting us by giving a star; request new features via "issues" tab)',
+    html.H3(html.A('GitHub link ro repository running this page',
+                   href="https://github.com/nockiro/eth_python_tracker")),
+    html.H3(html.A('GitHub link to the original authors, consider supporting them by starring the repository.',
                    href="https://github.com/pmaji/eth_python_tracker")),
     html.P([
         "Legend: Bright colored mark = likely WHALE ",
@@ -522,10 +524,10 @@ def prepare_data(ticker, exchange):
         ],
         'layout': go.Layout(
             # title automatically updates with refreshed market price
-            title=("The present market price of {} on {} is: {}{} at {}".format(ticker, exchange, symbol,
-                                                                                str(
-                                                                                    marketPrice[combined]),
-                                                                                timeStamps[combined])),
+			title=("The present market price of {} on {} is: {}{} at {}".format(ticker, exchange, symbol,
+																	str(
+																		marketPrice[combined]),
+																	timeStamps[combined])),
             xaxis=dict(title='Order Size', type='log', autotick=True,range=[log10(x_min*0.95), log10(x_max*1.03)]),
             yaxis={'title': '{} Price'.format(ticker),'range':[market_price*0.94, market_price*1.06]},
             hovermode='closest',
@@ -665,12 +667,6 @@ def watchdog():
                     target=preparePairThread, args=(pair,))
                 pair.threadPrepare.daemon = False
                 pair.threadPrepare.start()
-        if not tServer.isAlive():
-            alive = False
-            log(3,"Watchdog detected dead Server, restarting")
-            tServer = threading.Thread(target=serverThread)
-            tServer.daemon = False
-            tServer.start()
         if not tPreparer.isAlive():
             alive = False
             log(3,"Watchdog detected dead Preparer, restarting")
