@@ -1,7 +1,6 @@
 from operator import itemgetter
 from bintrees import RBTree
 from decimal import Decimal
-import pickle
 from cbpro.public_client import PublicClient
 from cbpro.websocket_client import WebsocketClient
 

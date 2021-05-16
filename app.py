@@ -4,7 +4,6 @@ import dash
 from dash.dependencies import Output, Event
 from math import log10, floor, isnan
 from datetime import datetime
-from random import randint
 import dash_core_components as dcc
 import dash_html_components as html
 import colorama
@@ -14,25 +13,23 @@ import getopt
 # non-dash-related libraries
 import plotly.graph_objs as go
 import pandas as pd
-import cbpro
 import numpy as np
 
 # modules added by contributors
 import time
 import threading
-from queue import Queue
 
 # custom library
 from gdax_book import GDaxBook
 
 colorama.init()
 # creating variables to facilitate later parameterization
-debugLevel = 3
+debugLevel = 0
 debugLevels = ["Special Debug","Debug","Info","Warnings","Errors"]
 debugColors = ['\033[34m','\033[90m','\033[32m','\033[33;1m','\033[31m']
 serverPort = 8050
-clientRefresh = 1
-desiredPairRefresh = 10000  # (in ms) The lower it is, the better is it regarding speed of at least some pairs, the higher it is, the less cpu load it takes.
+clientRefresh = 15
+desiredPairRefresh = 30000  # (in ms) The lower it is, the better is it regarding speed of at least some pairs, the higher it is, the less cpu load it takes.
 noDouble = True  # if activatet each order is in case of beeing part of a ladder just shown once (just as a bubble, not as a ladder)
 SYMBOLS = {"USD": "$", "BTC": "₿", "EUR": "€", "GBP": "£"} # used for the tooltip
 SIGNIFICANT = {"USD": 2, "BTC": 5, "EUR": 2, "GBP": 2} # used for rounding
@@ -167,8 +164,6 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=60):
 
     # prepare everything for depchart
     ob_step = (perc_above_first_ask - first_ask) / ob_points
-    ob_ask = pd.DataFrame(columns=[TBL_PRICE, TBL_VOLUME, 'address', 'text'])
-    ob_bid = pd.DataFrame(columns=[TBL_PRICE, TBL_VOLUME, 'address', 'text'])
 
     # Following is creating a new tbl 'ob_bid' which contains the summed volume and adress-count from current price to target price
     i = 1
@@ -178,22 +173,28 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=60):
     current_bid_volume = 0
     current_ask_adresses = 0
     current_bid_adresses = 0
+
+    # creating dictionary, since doing that and passing the values into a dataframe afterwards is way faster
+    ask_rows_list = []
+    bid_rows_list = []
+
     while i < ob_points:
         # Get Borders for ask/ bid
         current_ask_border = first_ask + (i * ob_step)
         current_bid_border = first_ask - (i * ob_step)
 
         # Get Volume
-        current_ask_volume += ask_tbl.loc[
-            (ask_tbl[TBL_PRICE] >= last_ask) & (ask_tbl[TBL_PRICE] < current_ask_border), TBL_VOLUME].sum()
-        current_bid_volume += bid_tbl.loc[
-            (bid_tbl[TBL_PRICE] <= last_bid) & (bid_tbl[TBL_PRICE] > current_bid_border), TBL_VOLUME].sum()
-
+        current_ask_volume += np.sum(ask_tbl.loc[
+            (ask_tbl[TBL_PRICE] >= last_ask) & (ask_tbl[TBL_PRICE] < current_ask_border), TBL_VOLUME])
+        current_bid_volume += np.sum(bid_tbl.loc[
+            (bid_tbl[TBL_PRICE] <= last_bid) & (bid_tbl[TBL_PRICE] > current_bid_border), TBL_VOLUME])
+            
         # Get Adresses
-        current_ask_adresses += ask_tbl.loc[
-            (ask_tbl[TBL_PRICE] >= last_ask) & (ask_tbl[TBL_PRICE] < current_ask_border), 'address'].count()
-        current_bid_adresses += bid_tbl.loc[
-            (bid_tbl[TBL_PRICE] <= last_bid) & (bid_tbl[TBL_PRICE] > current_bid_border), 'address'].count()
+        current_ask_adresses += len(ask_tbl.loc[
+            (ask_tbl[TBL_PRICE] >= last_ask) & (ask_tbl[TBL_PRICE] < current_ask_border), 'address'].index)
+            
+        current_bid_adresses += len(bid_tbl.loc[
+            (bid_tbl[TBL_PRICE] <= last_bid) & (bid_tbl[TBL_PRICE] > current_bid_border), 'address'].index)
 
         # Prepare Text
         ask_text = (str(round_sig(current_ask_volume, 3, 0, sig_use)) + currency + " (from " + str(current_ask_adresses) +
@@ -202,11 +203,16 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=60):
                      " orders) down to " + str(round_sig(current_bid_border, 3, 0, sig_use)) + symbol)
 
         # Save Data
-        ob_ask.loc[i - 1] = [current_ask_border, current_ask_volume, current_ask_adresses, ask_text]
-        ob_bid.loc[i - 1] = [current_bid_border, current_bid_volume, current_bid_adresses, bid_text]
+        
+        ask_rows_list.append([current_ask_border, current_ask_volume, current_ask_adresses, ask_text])
+        bid_rows_list.append([current_bid_border, current_bid_volume, current_bid_adresses, bid_text])
         i += 1
         last_ask = current_ask_border
         last_bid = current_bid_border
+    
+    # Set accumulated dictionary data into a dataframe so we can calculate on it lateron
+    ob_ask = pd.DataFrame(ask_rows_list, columns=[TBL_PRICE, TBL_VOLUME, 'address', 'text'])
+    ob_bid = pd.DataFrame(bid_rows_list, columns=[TBL_PRICE, TBL_VOLUME, 'address', 'text'])
 
     # Get Market Price
     try:
@@ -220,18 +226,14 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=60):
 
     fulltbl = bid_tbl.append(ask_tbl)  # append the buy and sell side tables to create one cohesive table
 
-    minVolume = fulltbl[TBL_VOLUME].sum() * minVolumePerc  # Calc minimum Volume for filtering
-    fulltbl = fulltbl[
-        (fulltbl[TBL_VOLUME] >= minVolume)]  # limit our view to only orders greater than or equal to the minVolume size
+    minVolume = np.sum(fulltbl[TBL_VOLUME]) * minVolumePerc  # Calc minimum Volume for filtering
+    fulltbl = fulltbl[(fulltbl[TBL_VOLUME] >= minVolume)]  # limit our view to only orders greater than or equal to the minVolume size
 
-    fulltbl['sqrt'] = np.sqrt(fulltbl[
-                                  TBL_VOLUME])  # takes the square root of the volume (to be used later on for the purpose of sizing the order bubbles)
+    fulltbl['sqrt'] = np.sqrt(fulltbl[TBL_VOLUME])  # takes the square root of the volume (to be used later on for the purpose of sizing the order bubbles)
 
-    final_tbl = fulltbl.groupby([TBL_PRICE])[
-        [TBL_VOLUME]].sum()  # transforms the table for a final time to craft the data view we need for analysis
+    final_tbl = np.sum(fulltbl.groupby([TBL_PRICE])[[TBL_VOLUME]])  # transforms the table for a final time to craft the data view we need for analysis
 
-    final_tbl['n_unique_orders'] = fulltbl.groupby(
-        TBL_PRICE).address.nunique().astype(int)
+    final_tbl['n_unique_orders'] = fulltbl.groupby(TBL_PRICE).address.nunique().astype(int)
 
     final_tbl = final_tbl[(final_tbl['n_unique_orders'] <= 20.0)]
     final_tbl[TBL_PRICE] = final_tbl.index
@@ -249,6 +251,7 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=60):
     bid_tbl['total_price'] = bid_tbl['volume'] * bid_tbl['price']
     ask_tbl['total_price'] = ask_tbl['volume'] * ask_tbl['price']
 
+    time.sleep(0.01)
     # Get Dataset for Volume Grouping
     vol_grp_bid = bid_tbl.groupby([TBL_VOLUME]).agg(
         {TBL_PRICE: [np.min, np.max, 'count'], TBL_VOLUME: np.sum, 'total_price': np.sum})
@@ -311,6 +314,7 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=60):
     sizeFactor = maxSize / cMaxSize
     final_tbl['sqrt'] = final_tbl['sqrt'] * sizeFactor
 
+    time.sleep(0.01)
     # making the tooltip column for our charts
     final_tbl['text'] = (
             "There is a " + final_tbl[TBL_VOLUME].map(str) + " " + currency + " order for " + symbol + final_tbl[
@@ -335,7 +339,7 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=60):
 
     depth_ask[combined] = ob_ask
     depth_bid[combined] = ob_bid
-
+    
     pair.newData = True
     pair.prepare = True  # just used for first enabling of send prepare
     return True
@@ -464,6 +468,8 @@ def prepare_data(ticker, exchange):
         bid_trace['x'].append(vol)
         bid_trace['y'].append(row['max_Price'])
         bid_trace['text'].append(row['text'])
+        time.sleep(0.01)
+
     for index, row in shape_ask[combined].iterrows():
         cWidth = row['unique'] * width_factor
         vol = row[TBL_VOLUME]
@@ -486,6 +492,8 @@ def prepare_data(ticker, exchange):
         ask_trace['x'].append(vol)
         ask_trace['y'].append(row['max_Price'])
         ask_trace['text'].append(row['text'])
+        time.sleep(0.01)
+        
     result = {
         'data': [
             go.Scatter(
@@ -684,9 +692,9 @@ def sendPrepareThread():
     while True:
         sendCache = prepare_send()
         overallNewData = False
-        time.sleep(0.5)
+        time.sleep(clientRefresh / 3)
         while not overallNewData:
-            time.sleep(0.5)
+            time.sleep(clientRefresh / 3)
 
 
 def recalcThread(pair):
@@ -694,6 +702,7 @@ def recalcThread(pair):
     refreshes = 0
     while True:
         if (pair.websocket):
+            log(1,"Checking diff for " + pair.ticker + ".. ")
             dif = getStamp() - pair.lastStamp
             if dif > desiredPairRefresh:
                 log(1,"Ms Diff for " + pair.ticker + " is " + str(
@@ -709,6 +718,7 @@ def recalcThread(pair):
                     count = -5
                     pair.webSocketKill = 0
             else:
+                log(1, pair.ticker + " sleeping for " + str((desiredPairRefresh - dif) / 1000) + 'seconds')
                 time.sleep((desiredPairRefresh - dif) / 1000)
 
 
@@ -732,8 +742,9 @@ def preparePairThread(pair):
             prepared[cbn] = prepare_data(ticker, exc)
             overallNewData = True
             pair.Dataprepared = True
+            time.sleep(10)
         while not pair.newData:
-            time.sleep(0.2)
+            time.sleep(10)
 
 def handleArgs(argv):
     global serverPort, debugLevel, desiredPairRefresh
