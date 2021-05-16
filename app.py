@@ -347,7 +347,7 @@ app = dash.Dash(__name__)
 # static_content_before contains all the info we want in our headers that won't be dynamic (for now)
 static_content_before = [
     html.H2('CRYPTO WHALE WATCHING APP'),
-    html.H3(html.A('GitHub link ro repository running this page',
+    html.H3(html.A('GitHub link to the repository running this page',
                    href="https://github.com/nockiro/crypto-whale-watching-app")),
     html.H3(html.A('GitHub link to the original authors, consider supporting them by starring the repository.',
                    href="https://github.com/pmaji/crypto-whale-watching-app")),
