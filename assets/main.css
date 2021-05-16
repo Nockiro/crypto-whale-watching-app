@@ -1,0 +1,12 @@
+body {
+    background-color: #3a3a3a;
+    color: lightgray;
+}
+
+a {
+    color: lightgray;
+}
+
+.gtitle {
+    fill: lightgray !important;
+}

@@ -4,6 +4,7 @@ Original repository by pmaji can be found [here](https://github.com/pmaji/crypto
 This is just a mirror repository with the following adjustments:
 * Adjustments for publishing via [Phusion Passenger](https://www.phusionpassenger.com/library/) running with Plesk on https://cryptowhale.nockiro.de/.
 * ADA instead of LTC/BCH
+* Darker design
 
 ### Publishing via Plesk/Passenger as independent application
 

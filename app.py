@@ -527,16 +527,16 @@ def prepare_data(ticker, exchange):
 																	str(
 																		marketPrice[combined]),
 																	timeStamps[combined])),
-            xaxis=dict(title='Order Size', type='log', autotick=True,range=[log10(x_min*0.95), log10(x_max*1.03)]),
-            yaxis={'title': '{} Price'.format(ticker),'range':[market_price*0.94, market_price*1.06]},
+            xaxis=dict(title='Order Size', type='log', autotick=True,range=[log10(x_min*0.95), log10(x_max*1.03)], color='lightgray'),
+            yaxis={'title': '{} Price'.format(ticker),'range':[market_price*0.94, market_price*1.06], 'color':'lightgray'},
             hovermode='closest',
             # now code to ensure the sizing is right
             margin=go.Margin(
                 l=75, r=75,
                 b=50, t=50,
                 pad=4),
-            paper_bgcolor='#F5F5F5',
-            plot_bgcolor='#F5F5F5',
+            paper_bgcolor='#4e4e4e',
+            plot_bgcolor='#4e4e4e',
             # adding the horizontal reference line at market price
             shapes=shape_arr,
             annotations=annot_arr,
