@@ -342,7 +342,7 @@ def calc_data(pair, range=0.05, maxSize=32, minVolumePerc=0.01, ob_points=60):
 
 
 # begin building the dash itself
-app = dash.Dash()
+app = dash.Dash(__name__)
 # simple layout that can be improved with better CSS/JS later, but it does the job for now
 # static_content_before contains all the info we want in our headers that won't be dynamic (for now)
 static_content_before = [
