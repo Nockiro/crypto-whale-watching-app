@@ -1,7 +1,7 @@
 ﻿# modules
 # dash-related libraries
 import dash
-from dash.dependencies import Output, Event
+from dash.dependencies import Output, Input
 from math import log10, floor, isnan
 from datetime import datetime
 import dash_core_components as dcc
@@ -534,11 +534,11 @@ def prepare_data(ticker, exchange):
 																	str(
 																		marketPrice[combined]),
 																	timeStamps[combined])),
-            xaxis=dict(title='Order Size', type='log', autotick=True,range=[log10(x_min*0.95), log10(x_max*1.03)], color='lightgray'),
+            xaxis=dict(title='Order Size', type='log',range=[log10(x_min*0.95), log10(x_max*1.03)], color='lightgray'),
             yaxis={'title': '{} Price'.format(ticker),'range':[market_price*0.94, market_price*1.06], 'color':'lightgray'},
             hovermode='closest',
             # now code to ensure the sizing is right
-            margin=go.Margin(
+            margin=go.layout.Margin(
                 l=75, r=75,
                 b=50, t=50,
                 pad=4),
@@ -574,8 +574,8 @@ def prepare_send():
 # links up the chart creation to the interval for an auto-refresh
 # creates one callback per currency pairing; easy to replicate / add new pairs
 @app.callback(Output('graphs_Container', 'children'),
-              events=[Event('main-interval-component', 'interval')])
-def update_Site_data():
+              Input('main-interval-component', 'n_intervals'))
+def update_Site_data(n_intervals):
     return getSendCache()
 
 
