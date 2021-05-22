@@ -10,3 +10,15 @@ a {
 .gtitle {
     fill: lightgray !important;
 }
+
+.dash-spinner-container {
+    background-color: #3a3a3a !important;
+}
+.dash-dot-spinner {
+    width: auto !important;
+}
+.dash-spinner::after {
+    /* loading time depends on the value set in desiredPairRefresh */
+    content: '\AWater is on the way.. \A(this can take up to 60 seconds on the first visit)';
+    white-space: pre;
+}

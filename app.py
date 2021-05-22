@@ -382,6 +382,7 @@ static_content_after = dcc.Interval(
 )
 app.layout = html.Div(id='main_container', children=[
     html.Div(static_content_before),
+    dcc.Loading(id="loading_screen", type="dot", fullscreen=True),
     html.Div(id='graphs_Container', children=cCache),
     html.Div(static_content_after),
 ])
@@ -584,7 +585,19 @@ def prepare_send():
 def update_Site_data(n_intervals):
     return getSendCache()
 
+# Sets the initial loading screen on the first run of the application
+# callbacks run once on app initialization, perfect for our initial loading screen
+@app.callback(Output('loading_screen', 'children'),
+              Input('main_container', 'children'))
+def update_loading(c_children):
+    global PAIRS
 
+    while not all(pair.lastStamp > 0 for pair in PAIRS):
+        time.sleep(clientRefresh)
+        
+    log(2, "Initial app loading (screen) should now be over")
+    return dash.no_update
+  
 # explanatory comment here to come
 def round_sig(x, sig=3, overwrite=0, minimum=0):
     if (x == 0):

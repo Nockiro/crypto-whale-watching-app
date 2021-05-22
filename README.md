@@ -5,6 +5,7 @@ This is just a mirror repository with the following adjustments:
 * Adjustments for publishing via [Phusion Passenger](https://www.phusionpassenger.com/library/) running with Plesk on https://cryptowhale.nockiro.de/.
 * ADA instead of LTC/BCH
 * Darker design
+* App loading screen because my webserver shuts the app down from time to time
 
 ### Publishing via Plesk/Passenger as independent application
 
