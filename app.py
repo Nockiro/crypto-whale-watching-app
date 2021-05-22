@@ -412,16 +412,6 @@ def prepare_data(ticker, exchange):
     width_factor = 15
     if max_unique > 0: width_factor = 15 / max_unique
     market_price = marketPrice[combined]
-    bid_trace = go.Scatter(
-        x=[], y=[],
-        text=[],
-        mode='markers', hoverinfo='text',
-        marker=dict(opacity=0, color='rgb(0,255,0)'))
-    ask_trace = go.Scatter(
-        x=[], y=[],
-        text=[],
-        mode='markers', hoverinfo='text',
-        marker=dict(opacity=0, color='rgb(255,0,0)'))
     shape_arr = [dict(
         # Line Horizontal
         type='line',
@@ -446,6 +436,7 @@ def prepare_data(ticker, exchange):
                           x1=x_max, y1=market_price * 0.95,
                           line=dict(color='rgb(0, 255, 0)', width=0.01),
                           fillcolor='rgba(0, 255, 0, 0.04)'))
+    bid_trace_datapoints = {'x': [], 'y': [], 'text': []}                      
     for index, row in shape_bid[combined].iterrows():
         cWidth = row['unique'] * width_factor
         vol = row[TBL_VOLUME]
@@ -459,17 +450,25 @@ def prepare_data(ticker, exchange):
                               x0=vol, y0=row['min_Price'],
                               x1=vol, y1=row['max_Price'],
                               line=dict(color='rgb(0, 255, 0)', width=cWidth)))
-        bid_trace['x'].append(vol)
-        bid_trace['y'].append(row['min_Price'])
-        bid_trace['text'].append(row['text'])
-        bid_trace['text'].append(row['text'])
-        bid_trace['x'].append(vol)
-        bid_trace['y'].append(posY)
-        bid_trace['x'].append(vol)
-        bid_trace['y'].append(row['max_Price'])
-        bid_trace['text'].append(row['text'])
+        bid_trace_datapoints['x'].append(vol)
+        bid_trace_datapoints['y'].append(row['min_Price'])
+        bid_trace_datapoints['text'].append(row['text'])
+        bid_trace_datapoints['text'].append(row['text'])
+        bid_trace_datapoints['x'].append(vol)
+        bid_trace_datapoints['y'].append(posY)
+        bid_trace_datapoints['x'].append(vol)
+        bid_trace_datapoints['y'].append(row['max_Price'])
+        bid_trace_datapoints['text'].append(row['text'])
         time.sleep(0.01)
 
+    bid_trace = go.Scatter(
+        x=bid_trace_datapoints['x'], 
+        y=bid_trace_datapoints['y'],
+        text=bid_trace_datapoints['text'],
+        mode='markers', hoverinfo='text',
+        marker=dict(opacity=0, color='rgb(0,255,0)'))
+
+    ask_trace_datapoints = {'x': [], 'y': [], 'text': []}       
     for index, row in shape_ask[combined].iterrows():
         cWidth = row['unique'] * width_factor
         vol = row[TBL_VOLUME]
@@ -483,17 +482,24 @@ def prepare_data(ticker, exchange):
                               x0=vol, y0=row['min_Price'],
                               x1=vol, y1=row['max_Price'],
                               line=dict(color='rgb(255, 0, 0)', width=cWidth)))
-        ask_trace['x'].append(vol)
-        ask_trace['y'].append(row['min_Price'])
-        ask_trace['text'].append(row['text'])
-        ask_trace['x'].append(vol)
-        ask_trace['y'].append(posY)
-        ask_trace['text'].append(row['text'])
-        ask_trace['x'].append(vol)
-        ask_trace['y'].append(row['max_Price'])
-        ask_trace['text'].append(row['text'])
+        ask_trace_datapoints['x'].append(vol)
+        ask_trace_datapoints['y'].append(row['min_Price'])
+        ask_trace_datapoints['text'].append(row['text'])
+        ask_trace_datapoints['x'].append(vol)
+        ask_trace_datapoints['y'].append(posY)
+        ask_trace_datapoints['text'].append(row['text'])
+        ask_trace_datapoints['x'].append(vol)
+        ask_trace_datapoints['y'].append(row['max_Price'])
+        ask_trace_datapoints['text'].append(row['text'])
         time.sleep(0.01)
-        
+
+    ask_trace = go.Scatter(
+        x=ask_trace_datapoints['x'], 
+        y=ask_trace_datapoints['y'], 
+        text=ask_trace_datapoints['text'],
+        mode='markers', hoverinfo='text',
+        marker=dict(opacity=0, color='rgb(255,0,0)'))
+
     result = {
         'data': [
             go.Scatter(
