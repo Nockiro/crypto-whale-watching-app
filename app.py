@@ -732,7 +732,7 @@ def recalcThread(pair):
                 else:
                     count = 0
                     pair.lastStamp = pair.usedStamp
-                if count > 5:
+                if count > 5 or pair.ob_Inst.stop == True:
                     log(3,"Going to kill Web socket from " + pair.ticker)
                     count = -5
                     pair.webSocketKill = 0
